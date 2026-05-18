@@ -1,0 +1,38 @@
+{
+	admin off
+	# Local HTTPS with internal CA — browsers need trust once
+	local_certs
+}
+
+{$RAKSHAK_DOMAIN:rakshak.lan} {
+	encode gzip zstd
+
+	handle /api/* {
+		reverse_proxy rakshak-api:8080
+	}
+
+	handle /health {
+		reverse_proxy rakshak-api:8080
+	}
+
+	handle {
+		reverse_proxy rakshak-web:3000
+	}
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+}
+
+# HTTP for LAN IP access during setup (no TLS yet)
+:80 {
+	handle /api/* {
+		reverse_proxy rakshak-api:8080
+	}
+	handle {
+		reverse_proxy rakshak-web:3000
+	}
+}

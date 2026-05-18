@@ -1,0 +1,48 @@
+# RAKSHAK CoreDNS — network DNS sinkhole
+# Binds :53, forwards clean queries to Unbound
+
+. {
+    bind 0.0.0.0
+    bufsize 1232
+
+    # Health for Docker
+    health :8081
+
+    # Prometheus metrics (optional scrape)
+    prometheus :9153
+
+    # Blocklist sinkhole — reloads when blocked.hosts changes
+    hosts /etc/coredns/blocklists/blocked.hosts {
+        fallthrough
+        reload 5m
+    }
+
+    # Per-device / custom overrides
+    hosts /etc/coredns/custom/local.hosts {
+        fallthrough
+    }
+
+    # Custom block additions (admin UI writes here)
+    hosts /etc/coredns/custom/blocked-extra.hosts {
+        fallthrough
+        reload 2m
+    }
+
+    # Cache responses aggressively for IoT/TV chatter
+    cache 300 {
+        prefetch 10 10% 1m
+    }
+
+    # Recursive resolution via Unbound (DNSSEC validated)
+    forward . unbound:5353 {
+        max_concurrent 1000
+        health_check 5s
+    }
+
+    # Query logging (parsed by rakshak-logd sidecar)
+    log . {
+        class all
+    }
+
+    errors
+}

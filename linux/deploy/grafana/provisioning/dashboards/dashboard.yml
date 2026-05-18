@@ -1,0 +1,9 @@
+apiVersion: 1
+providers:
+  - name: RAKSHAK
+    orgId: 1
+    folder: RAKSHAK
+    type: file
+    disableDeletion: false
+    options:
+      path: /etc/grafana/provisioning/dashboards/json

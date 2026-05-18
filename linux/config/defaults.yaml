@@ -1,0 +1,37 @@
+# RAKSHAK safe defaults — applied on first install
+
+dns:
+  port: 53
+  block_ipv4: "0.0.0.0"
+  block_ipv6: "::"
+  cache_ttl_seconds: 300
+  fail_mode: closed  # closed | open (open restores ISP DNS on crash)
+
+security:
+  jwt_ttl_hours: 24
+  bcrypt_cost: 12
+  rate_limit_login_per_minute: 10
+  internal_api_networks:
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    - 192.168.0.0/16
+
+blocklists:
+  update_cron: "0 4 * * *"
+  categories:
+    ads: true
+    trackers: true
+    malware: true
+    phishing: true
+    scam: true
+    telemetry: true
+    miners: true
+    exploits: true
+
+retention:
+  query_logs_days: 7
+  audit_logs_days: 90
+
+performance:
+  max_concurrent_dns: 1000
+  blocklist_reload_interval: 5m

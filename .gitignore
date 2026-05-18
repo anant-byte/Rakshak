@@ -1,0 +1,78 @@
+# Secrets & local config
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+credentials.json
+**/daemon.token
+**/daemon.pid
+**/settings.json
+
+# Databases & runtime data
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+data/
+blocklists/*.merged
+**/Application Support/
+
+# macOS / Swift
+macos/.build/
+macos/.build/**
+macos/.swiftpm/
+macos/Packages/
+macos/Rakshak.app/
+macos/**/*.dSYM/
+macos/**/*.d
+macos/**/*.o
+macos/**/DerivedData/
+
+# Windows / Tauri / Rust
+windows/node_modules/
+windows/dist/
+windows/src-tauri/target/
+core/target/
+**/target/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+*.tsbuildinfo
+
+# Go
+vendor/
+*.exe
+*.test
+coverage.out
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Docker / observability volumes
+caddy-data/
+prometheus-data/
+grafana-data/
+
+# Logs & OS
+*.log
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Install artifacts
+*.msi
+*.dmg
+*.pkg

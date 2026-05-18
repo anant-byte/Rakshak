@@ -1,0 +1,170 @@
+# RAKSHAK — production compose stack
+# Deploy on dedicated Linux host (VM, NUC, Pi 4 2GB+)
+
+services:
+  unbound:
+    image: mvance/unbound:1.17.1
+    container_name: rakshak-unbound
+    restart: unless-stopped
+    networks: [rakshak-internal]
+    volumes:
+      - ./dns/unbound/unbound.conf:/opt/unbound/etc/unbound/unbound.conf:ro
+    healthcheck:
+      test: ["CMD", "drill", "-p", "5353", "@127.0.0.1", "cloudflare.com"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  coredns:
+    build:
+      context: ./dns/coredns
+      dockerfile: Dockerfile
+    container_name: rakshak-coredns
+    restart: unless-stopped
+    ports:
+      - "${RAKSHAK_LAN_IP:-0.0.0.0}:53:53/udp"
+      - "${RAKSHAK_LAN_IP:-0.0.0.0}:53:53/tcp"
+    networks: [rakshak-internal]
+    volumes:
+      - blocklists:/etc/coredns/blocklists:ro
+      - ./dns/coredns/Corefile:/etc/coredns/Corefile:ro
+      - ./data/coredns:/etc/coredns/custom:ro
+    depends_on:
+      unbound:
+        condition: service_healthy
+      api:
+        condition: service_started
+    cap_add: [NET_BIND_SERVICE]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8081/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rakshak-api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      RAKSHAK_BLOCKLIST_DIR: /blocklists
+      RAKSHAK_DATA_DIR: /data
+    networks: [rakshak-internal]
+    volumes:
+      - rakshak-data:/data
+      - blocklists:/blocklists
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+
+  logd:
+    build:
+      context: ./dns/log-collector
+      dockerfile: Dockerfile
+    container_name: rakshak-logd
+    restart: unless-stopped
+    networks: [rakshak-internal]
+    environment:
+      RAKSHAK_API_URL: http://rakshak-api:8080/api/v1/internal/query-log
+      RAKSHAK_INTERNAL_SECRET: ${RAKSHAK_INTERNAL_SECRET:-}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      coredns:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c", "docker logs -f rakshak-coredns 2>&1 | /log-collector"]
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rakshak-worker
+    restart: unless-stopped
+    command: ["/rakshak", "worker"]
+    env_file: .env
+    environment:
+      RAKSHAK_BLOCKLIST_DIR: /blocklists
+      RAKSHAK_DATA_DIR: /data
+    networks: [rakshak-internal]
+    volumes:
+      - rakshak-data:/data
+      - blocklists:/blocklists
+    depends_on:
+      api:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api}
+    container_name: rakshak-web
+    restart: unless-stopped
+    networks: [rakshak-internal]
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2.8-alpine
+    container_name: rakshak-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    networks: [rakshak-internal]
+    volumes:
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - web
+      - api
+
+  # Optional observability — profile: monitoring
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: rakshak-prometheus
+    profiles: [monitoring]
+    restart: unless-stopped
+    networks: [rakshak-internal]
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    expose:
+      - "9090"
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    container_name: rakshak-grafana
+    profiles: [monitoring]
+    restart: unless-stopped
+    networks: [rakshak-internal]
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    expose:
+      - "3001"
+
+networks:
+  rakshak-internal:
+    driver: bridge
+
+volumes:
+  rakshak-data:
+  blocklists:
+  caddy-data:
+  caddy-config:
+  prometheus-data:
+  grafana-data:

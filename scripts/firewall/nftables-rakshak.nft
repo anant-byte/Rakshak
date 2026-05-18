@@ -1,0 +1,34 @@
+#!/usr/sbin/nft -f
+# RAKSHAK — force LAN clients to use local DNS only (fail-closed bypass prevention)
+# Apply: nft -f nftables-rakshak.nft
+# Requires: RAKSHAK_LAN_IP set below
+
+define RAKSHAK_IP = 192.168.1.10
+define LAN_IF = br0
+
+table inet rakshak {
+  chain prerouting {
+    type filter hook prerouting priority filter; policy accept;
+  }
+
+  chain forward {
+    type filter hook forward priority filter; policy accept;
+
+    # Drop outbound DNS from LAN not destined to RAKSHAK (UDP/TCP 53)
+    iifname $LAN_IF ip daddr != $RAKSHAK_IP udp dport 53 counter drop comment "force-dns-udp"
+    iifname $LAN_IF ip daddr != $RAKSHAK_IP tcp dport 53 counter drop comment "force-dns-tcp"
+
+    # Block DoT bypass (853) except to RAKSHAK if you terminate DoT locally
+    iifname $LAN_IF tcp dport 853 counter drop comment "block-dot-bypass"
+
+    # Optional: block common DoH providers on 443 (aggressive — may break legit apps)
+    # iifname $LAN_IF ip daddr { 1.1.1.1, 8.8.8.8, 9.9.9.9 } tcp dport 443 counter drop
+  }
+
+  chain input {
+    type filter hook input priority filter; policy accept;
+    # Allow DNS to RAKSHAK host
+    udp dport 53 accept
+    tcp dport 53 accept
+  }
+}
