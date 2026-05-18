@@ -1,6 +1,6 @@
 # RAKSHAK
 
-[![CI](https://github.com/anant-byte/rakshak/actions/workflows/ci.yml/badge.svg)](https://github.com/anant-byte/rakshak/actions/workflows/ci.yml)
+[![CI](https://github.com/anant-byte/Rakshak/actions/workflows/ci.yml/badge.svg)](https://github.com/anant-byte/Rakshak/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 ![macOS](https://img.shields.io/badge/macOS-14%2B-black)
 ![Windows](https://img.shields.io/badge/Windows-10%2B-blue)
@@ -24,7 +24,7 @@ _Screenshot: add `docs/images/dashboard.png` before your first release._
 ### macOS (one command)
 
 ```bash
-git clone https://github.com/anant-byte/rakshak.git
+git clone https://github.com/anant-byte/Rakshak.git
 cd rakshak/macos && ./run.sh
 ```
 
@@ -33,7 +33,7 @@ Set router DHCP DNS to your Mac’s LAN IP (shown in the app). See [docs/macos-s
 ### Windows
 
 ```powershell
-git clone https://github.com/anant-byte/rakshak.git
+git clone https://github.com/anant-byte/Rakshak.git
 cd rakshak
 .\scripts\install-windows.ps1
 cd windows
@@ -46,7 +46,7 @@ Install the generated `.msi` / `.exe` from `windows/src-tauri/target/release/bun
 ### Linux (Docker appliance)
 
 ```bash
-git clone https://github.com/anant-byte/rakshak.git
+git clone https://github.com/anant-byte/Rakshak.git
 cd rakshak
 ./scripts/install.sh
 ./scripts/configure-router.sh
