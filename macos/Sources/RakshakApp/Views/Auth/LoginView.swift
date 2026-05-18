@@ -55,6 +55,7 @@ struct LoginView: View {
         }
     }
 
+    @MainActor
     private func submit() {
         if isFirstRun {
             guard password.count >= 8 else { error = "Use at least 8 characters"; return }

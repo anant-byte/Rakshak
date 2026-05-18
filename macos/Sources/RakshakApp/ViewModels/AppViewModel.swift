@@ -3,8 +3,8 @@ import Observation
 import RakshakCore
 import UserNotifications
 
-@Observable
 @MainActor
+@Observable
 final class AppViewModel {
     var daemonState = DaemonState(status: .stopped, message: "Connecting…", stats: .empty, updatedAt: .now)
     var devices: [NetworkDevice] = []
@@ -45,7 +45,7 @@ final class AppViewModel {
 
     func startPolling() {
         pollTask?.cancel()
-        pollTask = Task {
+        pollTask = Task { @MainActor in
             while !Task.isCancelled {
                 await refresh()
                 try? await Task.sleep(for: .seconds(2))

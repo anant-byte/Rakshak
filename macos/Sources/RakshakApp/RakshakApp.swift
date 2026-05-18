@@ -4,6 +4,7 @@ import RakshakCore
 import UserNotifications
 
 @main
+@MainActor
 struct RakshakApp: App {
     @State private var appState = AppViewModel()
 

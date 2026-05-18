@@ -38,17 +38,23 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .navigationTitle("Settings")
-        .onChange(of: app.settings.blockAds) { _, _ in app.saveSettings() }
+        .onChange(of: app.settings.blockAds) { _, _ in
+            Task { @MainActor in app.saveSettings() }
+        }
     }
 
     private var routerHelp: String {
         "Set your router's DHCP DNS to this Mac's IP so all devices are protected."
     }
 
+    @MainActor
     private func bind(_ keyPath: WritableKeyPath<AppSettings, Bool>) -> Binding<Bool> {
         Binding(
-            get: { app.settings[keyPath: keyPath] },
-            set: { app.settings[keyPath: keyPath] = $0; app.saveSettings() }
+            get: { @MainActor in app.settings[keyPath: keyPath] },
+            set: { @MainActor newValue in
+                app.settings[keyPath: keyPath] = newValue
+                app.saveSettings()
+            }
         )
     }
 }
